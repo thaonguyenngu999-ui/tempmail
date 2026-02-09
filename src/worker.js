@@ -152,10 +152,17 @@ app.delete('/api/cleanup', async (c) => {
 function decodeQuotedPrintable(str) {
   // Remove soft line breaks (=\r\n or =\n)
   str = str.replace(/=\r?\n/g, '');
-  // Decode =XX hex sequences
-  return str.replace(/=([0-9A-Fa-f]{2})/g, (_, hex) =>
-    String.fromCharCode(parseInt(hex, 16))
-  );
+  // Convert to bytes first, then decode as UTF-8
+  const bytes = [];
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '=' && i + 2 < str.length && /[0-9A-Fa-f]{2}/.test(str.substring(i + 1, i + 3))) {
+      bytes.push(parseInt(str.substring(i + 1, i + 3), 16));
+      i += 2;
+    } else {
+      bytes.push(str.charCodeAt(i));
+    }
+  }
+  return new TextDecoder('utf-8').decode(new Uint8Array(bytes));
 }
 
 function decodeBase64(str) {
