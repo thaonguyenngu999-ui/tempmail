@@ -3,144 +3,221 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TempMail</title>
+  <title>TempMail - Email Tam Thoi</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>@</text></svg>">
   <style>
+    :root{--bg:#07080f;--card:#0e1019;--card2:#131520;--border:#1a1d2e;--border2:#252840;--accent:#6c5ce7;--accent2:#a78bfa;--green:#10b981;--green2:#059669;--red:#ef4444;--text:#e2e8f0;--text2:#94a3b8;--text3:#4a5568;--radius:16px;--radius2:12px}
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh}
-    .container{max-width:760px;margin:0 auto;padding:16px}
-    header{text-align:center;padding:24px 0 16px}
-    header h1{font-size:1.8rem;color:#00d4ff}
-    header p{color:#666;font-size:.85rem;margin-top:4px}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
-    .card{background:#12122a;border:1px solid#1e1e4a;border-radius:12px;padding:20px;margin-bottom:16px}
+    /* Animated gradient bg */
+    body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 50%,rgba(108,92,231,.06) 0%,transparent 50%),radial-gradient(circle at 70% 50%,rgba(16,185,129,.04) 0%,transparent 50%);z-index:-1;animation:bgmove 20s ease-in-out infinite alternate}
+    @keyframes bgmove{to{transform:translate(5%,3%)}}
 
-    .email-row{display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
-    .email-row input{background:#0a0a1a;border:1px solid#2a2a5e;color:#fff;padding:10px 14px;border-radius:8px;font-size:1.05rem;width:140px;text-align:right}
-    .email-row .at{color:#444;font-size:1.2rem;padding:0 2px}
-    .email-row select{background:#0a0a1a;border:1px solid#2a2a5e;color:#00d4ff;padding:10px 14px;border-radius:8px;font-size:1.05rem;cursor:pointer}
+    .wrap{max-width:720px;margin:0 auto;padding:16px 16px 80px}
 
-    .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-    .btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:.15s}
-    .btn-p{background:#00d4ff;color:#0a0a1a}.btn-p:hover{background:#00b8e6}
-    .btn-s{background:#1e1e4a;color:#ccc}.btn-s:hover{background:#2a2a6a}
-    .btn-g{background:#28a745;color:#fff}.btn-g:hover{background:#218838}
-    .btn-d{background:#dc3545;color:#fff;font-size:.75rem;padding:4px 10px}.btn-d:hover{background:#c82333}
+    /* Header */
+    .hdr{text-align:center;padding:32px 0 24px}
+    .hdr h1{font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,var(--accent2),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
+    .hdr p{color:var(--text3);font-size:.78rem;margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
 
-    .status{text-align:center;color:#555;font-size:.8rem;margin-top:8px;min-height:18px}
-    .status.on{color:#28a745}
+    /* Card */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(108,92,231,.3),transparent)}
 
-    .otp-card{background:#0d2a0d;border:2px solid#28a745;border-radius:12px;padding:18px;text-align:center;display:none;margin-bottom:16px}
-    .otp-card.show{display:block}
-    .otp-label{color:#6c6;font-size:.8rem;margin-bottom:4px}
-    .otp-num{font-size:2.8rem;font-weight:bold;color:#28a745;letter-spacing:6px;font-family:'Courier New',monospace;cursor:pointer}
-    .otp-hint{color:#555;font-size:.75rem;margin-top:4px}
+    /* Email composer */
+    .composer{display:flex;align-items:center;gap:0;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius2);overflow:hidden;margin-bottom:14px;transition:border-color .2s}
+    .composer:focus-within{border-color:var(--accent)}
+    .composer input{flex:1;background:transparent;border:none;color:var(--text);padding:14px 16px;font-size:1rem;outline:none;min-width:0}
+    .composer .at{color:var(--text3);font-size:1rem;padding:0 2px;user-select:none}
+    .composer select{background:transparent;border:none;border-left:1px solid var(--border);color:var(--accent2);padding:14px 12px;font-size:.95rem;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none}
 
-    .inbox h2{font-size:1rem;color:#666;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-    .inbox .cnt{background:#1e1e4a;color:#00d4ff;padding:1px 8px;border-radius:12px;font-size:.8rem}
+    /* Buttons */
+    .btns{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;position:relative;overflow:hidden}
+    .btn:active{transform:scale(.97)}
+    .btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#5b4cdb;box-shadow:0 4px 20px rgba(108,92,231,.3)}
+    .btn-ghost{background:var(--card2);color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{background:var(--border);color:var(--text)}
+    .btn-green{background:var(--green);color:#fff}.btn-green:hover{background:var(--green2);box-shadow:0 4px 20px rgba(16,185,129,.3)}
+    .btn-sm{padding:6px 14px;font-size:.78rem;border-radius:8px}
 
-    .email-item{background:#12122a;border:1px solid#1e1e4a;border-radius:8px;padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:.15s}
-    .email-item:hover{border-color:#00d4ff;background:#161640}
-    .email-item .from{color:#00d4ff;font-weight:600;font-size:.85rem}
-    .email-item .subj{color:#ccc;margin-top:3px;font-size:.9rem}
-    .email-item .meta{color:#555;font-size:.75rem;margin-top:3px;display:flex;justify-content:space-between}
-    .otp-badge{background:#28a745;color:#fff;padding:1px 7px;border-radius:4px;font-size:.75rem;font-weight:bold}
+    .status{text-align:center;color:var(--text3);font-size:.78rem;margin-top:10px;min-height:16px;display:flex;align-items:center;justify-content:center;gap:6px}
+    .status.on{color:var(--green)}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-    .empty{text-align:center;padding:30px;color:#444}
-    .empty .ico{font-size:2rem;margin-bottom:8px}
+    /* OTP Card */
+    .otp{background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(16,185,129,.02));border:1px solid rgba(16,185,129,.2);border-radius:var(--radius);padding:24px;text-align:center;display:none;margin-bottom:14px;cursor:pointer;transition:all .2s}
+    .otp.show{display:block}
+    .otp:hover{border-color:rgba(16,185,129,.4);box-shadow:0 0 30px rgba(16,185,129,.08)}
+    .otp-label{color:var(--green);font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+    .otp-num{font-size:3rem;font-weight:800;color:var(--green);letter-spacing:10px;font-family:'Courier New',monospace;text-shadow:0 0 20px rgba(16,185,129,.3)}
+    .otp-hint{color:var(--text3);font-size:.72rem;margin-top:6px}
 
-    .loading{display:inline-block;width:14px;height:14px;border:2px solid#222;border-top-color:#00d4ff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
+    /* Inbox */
+    .inbox-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .inbox-hdr h2{font-size:.9rem;color:var(--text2);font-weight:600;display:flex;align-items:center;gap:8px}
+    .badge{background:var(--accent);color:#fff;padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:700;min-width:24px;text-align:center}
+
+    .email-item{background:var(--card2);border:1px solid transparent;border-radius:var(--radius2);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+    .email-item:hover{border-color:var(--accent);transform:translateX(4px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+    .ei-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+    .ei-from{color:var(--accent2);font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+    .ei-time{color:var(--text3);font-size:.72rem;white-space:nowrap}
+    .ei-subj{color:var(--text);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ei-otp{display:inline-flex;align-items:center;gap:4px;background:rgba(16,185,129,.12);color:var(--green);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700;margin-top:6px}
+
+    .empty{text-align:center;padding:40px 20px;color:var(--text3)}
+    .empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.3}
+    .empty p{font-size:.85rem}
+
+    /* Loading spinner */
+    .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle}
     @keyframes sp{to{transform:rotate(360deg)}}
 
-    .dm-section{padding-top:16px;border-top:1px solid#1e1e4a;margin-top:8px}
-    .dm-section h3{color:#666;font-size:.9rem;margin-bottom:10px}
-    .dm-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-    .dm-tag{background:#1e1e4a;color:#00d4ff;padding:5px 10px;border-radius:16px;font-size:.8rem;display:flex;align-items:center;gap:5px}
-    .dm-tag .x{cursor:pointer;color:#f55;font-weight:bold}
+    /* Domain section */
+    .dm-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .dm-hdr h3{color:var(--text3);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+    .dm-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+    .dm-tag{background:var(--card2);color:var(--accent2);padding:6px 12px;border-radius:20px;font-size:.78rem;display:flex;align-items:center;gap:6px;border:1px solid var(--border);transition:.2s}
+    .dm-tag:hover{border-color:var(--accent)}
+    .dm-tag .x{cursor:pointer;color:var(--red);font-size:.9rem;opacity:.5;transition:.15s;line-height:1}
+    .dm-tag .x:hover{opacity:1}
     .dm-add{display:flex;gap:6px}
-    .dm-add input{flex:1;background:#0a0a1a;border:1px solid#2a2a5e;color:#fff;padding:7px 10px;border-radius:8px;font-size:.85rem}
+    .dm-add input{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:10px;font-size:.82rem;outline:none;transition:border .2s}
+    .dm-add input:focus{border-color:var(--accent)}
 
-    .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+    /* Modal */
+    .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
     .modal-bg.show{display:flex}
-    .modal{background:#12122a;border:1px solid#1e1e4a;border-radius:12px;padding:20px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto}
-    .modal h3{color:#00d4ff;margin-bottom:2px;font-size:1rem}
-    .modal .mf{color:#666;font-size:.8rem;margin-bottom:12px}
-    .modal .mb{background:#0a0a1a;border-radius:8px;padding:14px;color:#bbb;line-height:1.5;word-break:break-word;font-size:.9rem}
+    .modal{background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;max-width:620px;width:100%;max-height:80vh;overflow-y:auto;animation:modalIn .2s ease}
+    @keyframes modalIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .modal-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+    .modal h3{color:var(--text);font-size:1rem;font-weight:600;flex:1;margin-right:12px}
+    .modal-close{background:var(--card2);border:1px solid var(--border);color:var(--text3);width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:.2s;flex-shrink:0}
+    .modal-close:hover{background:var(--border);color:var(--text)}
+    .modal .mf{color:var(--text3);font-size:.78rem;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+    .modal .mb{background:var(--bg);border-radius:var(--radius2);padding:16px;color:var(--text2);line-height:1.6;word-break:break-word;font-size:.88rem}
 
-    .toast{position:fixed;bottom:16px;right:16px;padding:10px 18px;border-radius:8px;font-weight:600;font-size:.85rem;opacity:0;transition:.3s;z-index:200;color:#fff}
-    .toast.show{opacity:1}
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:10px;font-weight:600;font-size:.82rem;opacity:0;transition:all .3s;z-index:200;color:#fff;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 
     @media(max-width:500px){
-      .email-row{flex-direction:column}
-      .email-row input,.email-row select{width:100%;text-align:center}
-      .otp-num{font-size:2rem;letter-spacing:3px}
+      .composer{flex-wrap:wrap}
+      .composer input{min-width:100%;border-bottom:1px solid var(--border)}
+      .composer .at{display:none}
+      .composer select{width:100%;border-left:none;border-top:1px solid var(--border)}
+      .otp-num{font-size:2.2rem;letter-spacing:5px}
+      .btns{justify-content:center}
     }
   </style>
 </head>
 <body>
-<div class="container">
-  <header>
+<div class="wrap">
+  <header class="hdr">
     <h1>TempMail</h1>
-    <p>Multi Domain - Auto OTP - Cloudflare</p>
+    <p>Multi Domain &middot; Auto OTP &middot; Cloudflare</p>
   </header>
 
+  <!-- Email Input -->
   <div class="card">
-    <div class="email-row">
-      <input type="text" id="local" placeholder="username">
+    <div class="composer">
+      <input type="text" id="local" placeholder="username" autocomplete="off" spellcheck="false">
       <span class="at">@</span>
       <select id="domSel"></select>
     </div>
     <div class="btns">
-      <button class="btn btn-p" onclick="checkMail()">Check Mail</button>
-      <button class="btn btn-s" onclick="genRandom()">Random</button>
-      <button class="btn btn-g" onclick="copyEmail()">Copy</button>
+      <button class="btn btn-accent" onclick="checkMail()">Check Mail</button>
+      <button class="btn btn-ghost" onclick="genRandom()">Random</button>
+      <button class="btn btn-green" onclick="copyEmail()">Copy</button>
     </div>
     <div class="status" id="st"></div>
   </div>
 
-  <div class="otp-card" id="otpCard">
-    <div class="otp-label">OTP CODE</div>
-    <div class="otp-num" id="otpNum" onclick="copyOTP()"></div>
-    <div class="otp-hint">click to copy</div>
+  <!-- OTP Display -->
+  <div class="otp" id="otpCard" onclick="copyOTP()">
+    <div class="otp-label">OTP Code</div>
+    <div class="otp-num" id="otpNum"></div>
+    <div class="otp-hint">tap to copy</div>
   </div>
 
-  <div class="inbox">
-    <h2>Inbox <span class="cnt" id="cnt">0</span></h2>
-    <div id="list">
-      <div class="empty"><div class="ico">...</div><p>Nhap email roi bam Check Mail</p></div>
-    </div>
-  </div>
-
+  <!-- Inbox -->
   <div class="card">
-    <div class="dm-section">
-      <h3>Domains</h3>
-      <div class="dm-tags" id="dmTags"></div>
-      <div class="dm-add">
-        <input type="text" id="newDm" placeholder="example.com" onkeydown="if(event.key==='Enter')addDm()">
-        <button class="btn btn-p" onclick="addDm()">Add</button>
+    <div class="inbox-hdr">
+      <h2>Inbox <span class="badge" id="cnt">0</span></h2>
+    </div>
+    <div id="list">
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+        <p>Enter email and hit Check Mail</p>
       </div>
     </div>
   </div>
-</div>
 
-<div class="modal-bg" id="modal" onclick="if(event.target===this)this.classList.remove('show')">
-  <div class="modal">
-    <h3 id="mSubj"></h3>
-    <div class="mf" id="mFrom"></div>
-    <div class="mb" id="mBody"></div>
-    <div style="margin-top:12px;text-align:right"><button class="btn btn-s" onclick="document.getElementById('modal').classList.remove('show')">Close</button></div>
+  <!-- Domain Management -->
+  <div class="card">
+    <div class="dm-hdr">
+      <h3>Domains</h3>
+    </div>
+    <div class="dm-tags" id="dmTags"></div>
+    <div class="dm-add">
+      <input type="text" id="newDm" placeholder="example.com" onkeydown="if(event.key==='Enter')addDm()">
+      <button class="btn btn-accent btn-sm" onclick="addDm()">Add</button>
+    </div>
   </div>
 </div>
 
+<!-- Email Detail Modal -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <div class="modal-top">
+      <h3 id="mSubj"></h3>
+      <button class="modal-close" onclick="document.getElementById('modal').classList.remove('show')">&times;</button>
+    </div>
+    <div class="mf" id="mFrom"></div>
+    <div class="mb" id="mBody"></div>
+  </div>
+</div>
+
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-let timer=null;
+let timer=null,currentAddr='';
 
 init();
 
-function init(){loadDomains()}
-function getAddr(){const l=document.getElementById('local').value.trim(),d=document.getElementById('domSel').value;return l&&d?l+'@'+d:''}
+function init(){
+  loadDomains();
+  // Restore last used email
+  const saved=localStorage.getItem('tm_addr');
+  if(saved){
+    const[l,d]=saved.split('@');
+    if(l)document.getElementById('local').value=l;
+    // domain will be selected after loadDomains
+    setTimeout(()=>{
+      const sel=document.getElementById('domSel');
+      if(d&&sel.querySelector(`option[value="${d}"]`)){sel.value=d}
+    },500);
+  }
+  // Enter to check
+  document.getElementById('local').addEventListener('keydown',e=>{if(e.key==='Enter')checkMail()});
+}
 
+function getAddr(){
+  const l=document.getElementById('local').value.trim(),d=document.getElementById('domSel').value;
+  return l&&d?l+'@'+d:'';
+}
+
+function saveAddr(){const a=getAddr();if(a)localStorage.setItem('tm_addr',a)}
+
+// === Domains ===
 async function loadDomains(){
   try{
     const r=await fetch('/api/domains');const d=await r.json();
@@ -150,7 +227,7 @@ async function loadDomains(){
       sel.innerHTML+=`<option value="${x.domain}">@${x.domain}</option>`;
       tags.innerHTML+=`<span class="dm-tag">${x.domain}<span class="x" onclick="rmDm('${x.domain}')">&times;</span></span>`;
     });
-    if(!d.domains.length)tags.innerHTML='<span style="color:#555">No domains yet</span>';
+    if(!d.domains.length)tags.innerHTML='<span style="color:var(--text3);font-size:.82rem">No domains added yet</span>';
   }catch(e){console.error(e)}
 }
 
@@ -165,22 +242,35 @@ async function addDm(){
 async function rmDm(dm){
   if(!confirm('Remove '+dm+'?'))return;
   await fetch('/api/domains/'+dm,{method:'DELETE'});
-  toast('Removed '+dm);loadDomains()
+  toast('Removed');loadDomains()
 }
 
+// === Check Mail ===
 async function checkMail(){
-  const addr=getAddr();if(!addr)return toast('Enter email first',1);
+  const addr=getAddr();
+  if(!addr)return toast('Enter email first',1);
+  saveAddr();
+  currentAddr=addr;
   setSt('Checking...',1);
   try{
-    const[mRes,oRes]=await Promise.all([fetch('/api/mail/'+encodeURIComponent(addr)),fetch('/api/otp/'+encodeURIComponent(addr))]);
+    const[mRes,oRes]=await Promise.all([
+      fetch('/api/mail/'+encodeURIComponent(addr)),
+      fetch('/api/otp/'+encodeURIComponent(addr))
+    ]);
     const mData=await mRes.json(),oData=await oRes.json();
     document.getElementById('cnt').textContent=mData.count;
     if(mData.count===0){
-      document.getElementById('list').innerHTML='<div class="empty"><div class="ico">...</div><p>No emails for '+esc(addr)+'</p></div>';
+      document.getElementById('list').innerHTML=`
+        <div class="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+          <p>Waiting for emails to <b>${esc(addr)}</b></p>
+        </div>`;
     }else{renderList(mData.emails,addr)}
-    if(oData.otp){document.getElementById('otpCard').classList.add('show');document.getElementById('otpNum').textContent=oData.otp}
-    else{document.getElementById('otpCard').classList.remove('show')}
-    setSt('Updated '+new Date().toLocaleTimeString(),0);
+    if(oData.otp){
+      document.getElementById('otpCard').classList.add('show');
+      document.getElementById('otpNum').textContent=oData.otp;
+    }else{document.getElementById('otpCard').classList.remove('show')}
+    setSt('Auto-refreshing',0);
     startAuto();
   }catch(e){setSt('Connection error',0);console.error(e)}
 }
@@ -188,15 +278,19 @@ async function checkMail(){
 function renderList(emails,addr){
   document.getElementById('list').innerHTML=emails.map(e=>`
     <div class="email-item" onclick="viewMail('${addr}',${e.id})">
-      <div class="from">${esc(e.mail_from)}</div>
-      <div class="subj">${esc(e.subject)}</div>
-      <div class="meta"><span>${ago(e.created_at)}</span>${e.otp?`<span class="otp-badge">OTP: ${e.otp}</span>`:''}</div>
+      <div class="ei-top">
+        <span class="ei-from">${esc(e.mail_from)}</span>
+        <span class="ei-time">${ago(e.created_at)}</span>
+      </div>
+      <div class="ei-subj">${esc(e.subject)}</div>
+      ${e.otp?`<div class="ei-otp">OTP: ${e.otp}</div>`:''}
     </div>`).join('')
 }
 
 async function viewMail(addr,id){
   try{
-    const r=await fetch('/api/mail/'+encodeURIComponent(addr)+'/detail/'+id);const d=await r.json();
+    const r=await fetch('/api/mail/'+encodeURIComponent(addr)+'/detail/'+id);
+    const d=await r.json();
     document.getElementById('mSubj').textContent=d.subject;
     document.getElementById('mFrom').textContent='From: '+d.mail_from+' | '+d.created_at;
     const body=document.getElementById('mBody');
@@ -205,20 +299,51 @@ async function viewMail(addr,id){
   }catch(e){toast('Error loading email',1)}
 }
 
+// === Generate ===
 async function genRandom(){
-  const dm=document.getElementById('domSel').value;if(!dm)return toast('Add a domain first',1);
+  const dm=document.getElementById('domSel').value;
+  if(!dm)return toast('Add a domain first',1);
   const r=await fetch('/api/generate?domain='+dm);const d=await r.json();
-  document.getElementById('local').value=d.local;toast('Generated '+d.email)
+  document.getElementById('local').value=d.local;
+  toast('Generated!');
 }
 
-function copyEmail(){const a=getAddr();if(!a)return;navigator.clipboard.writeText(a);toast('Copied!')}
-function copyOTP(){const o=document.getElementById('otpNum').textContent;if(!o)return;navigator.clipboard.writeText(o);toast('OTP copied: '+o)}
+// === Copy ===
+function copyEmail(){
+  const a=getAddr();if(!a)return toast('Enter email first',1);
+  navigator.clipboard.writeText(a);toast('Copied: '+a);
+}
+function copyOTP(){
+  const o=document.getElementById('otpNum').textContent;
+  if(!o)return;
+  navigator.clipboard.writeText(o);toast('OTP: '+o);
+}
 
+// === Auto refresh ===
 function startAuto(){if(timer)clearInterval(timer);timer=setInterval(checkMail,5000)}
-function setSt(t,loading){const e=document.getElementById('st');e.innerHTML=loading?'<span class="loading"></span> '+t:t;e.className=loading?'status':'status on'}
-function toast(m,err){const e=document.getElementById('toast');e.textContent=m;e.style.background=err?'#dc3545':'#28a745';e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200)}
+
+// === Helpers ===
+function setSt(t,loading){
+  const e=document.getElementById('st');
+  if(loading){e.innerHTML=`<span class="spin"></span> ${t}`;e.className='status'}
+  else{e.innerHTML=`<span class="dot"></span> ${t}`;e.className='status on'}
+}
+function toast(m,err){
+  const e=document.getElementById('toast');
+  e.textContent=m;
+  e.style.background=err?'var(--red)':'var(--accent)';
+  e.classList.add('show');
+  setTimeout(()=>e.classList.remove('show'),2200);
+}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
-function ago(ds){const s=Math.floor((Date.now()-new Date(ds+'Z'))/1000);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'}
+function ago(ds){
+  const s=Math.floor((Date.now()-new Date(ds+'Z'))/1000);
+  if(s<5)return 'just now';
+  if(s<60)return s+'s ago';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
 </script>
 </body>
 </html>
