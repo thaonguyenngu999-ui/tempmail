@@ -10,7 +10,7 @@ directory = "./public"
 [[d1_databases]]
 binding = "DB"
 database_name = "tempmail-db"
-database_id = "YOUR_D1_DATABASE_ID"  # Replace after running: wrangler d1 create tempmail-db
+database_id = "ebfc01aa-9376-491d-b556-907321fda72e"
 
 # Environment variables
 [vars]
