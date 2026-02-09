@@ -1,122 +1,119 @@
-# TempMail - Multi Domain Temporary Email
+# TempMail - Full Cloudflare
 
-Dich vu email tam thoi ho tro nhieu domain, tu dong trich xuat OTP.
-
-## Architecture
+Email tam thoi, nhieu domain, auto OTP. Chay hoan toan tren Cloudflare (free, khong can VPS).
 
 ```
-[Email] → [Cloudflare Email Routing] → [CF Worker] → [API Server] → [SQLite]
-                                                           ↕
-                                                     [Web UI / API]
+[Email] → [CF Email Routing] → [Worker (email handler)]
+                                      ↓
+                                 [D1 Database]
+                                      ↑
+[Browser/API] → [Worker (API + UI)] → [D1 Database]
 ```
 
-## Quick Start
+## Setup
 
-### 1. Run server
+### 1. Install & Login Cloudflare
 
 ```bash
-# Direct
 npm install
-npm start
-
-# Docker
-docker compose up -d
+npx wrangler login
 ```
 
-Server chay tai `http://localhost:3000`
-
-### 2. Setup Cloudflare Email Routing
-
-Cho moi domain (vd: `bambo.com`):
-
-1. **Cloudflare Dashboard** → chon domain → **Email** → **Email Routing**
-2. Enable Email Routing
-3. **Email Workers** → Create Worker → paste code tu `cf-worker/worker.js`
-4. Set environment variables:
-   - `API_URL` = URL server cua ban (vd: `https://mail.yourdomain.com`)
-   - `API_KEY` = key bao mat (chay `wrangler secret put API_KEY`)
-5. **Routes** → **Catch-all** → Send to Worker
-
-Lam lai buoc nay cho moi domain muon su dung.
-
-### 3. Add domains via UI or API
+### 2. Tao D1 Database
 
 ```bash
-# Via API
-curl -X POST http://localhost:3000/api/domains \
+npx wrangler d1 create tempmail-db
+```
+
+Copy `database_id` vao `wrangler.toml`:
+
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "tempmail-db"
+database_id = "xxxx-xxxx-xxxx"   # ← paste here
+```
+
+### 3. Chay migration
+
+```bash
+# Remote (production)
+npm run db:migrate
+
+# Local dev
+npm run db:migrate:local
+```
+
+### 4. Deploy
+
+```bash
+npm run deploy
+```
+
+Worker se chay tai `https://tempmail.<your-account>.workers.dev`
+
+### 5. Setup Email Routing (cho moi domain)
+
+1. **CF Dashboard** → chon domain (vd `bambo.com`)
+2. **Email** → **Email Routing** → Enable
+3. Tab **Email Workers** → route toi worker `tempmail`
+4. **Routing rules** → **Catch-all** → Send to Worker `tempmail`
+
+Lap lai cho moi domain.
+
+### 6. Them domain vao he thong
+
+Mo web UI hoac:
+
+```bash
+curl -X POST https://tempmail.xxx.workers.dev/api/domains \
   -H "Content-Type: application/json" \
   -d '{"domain": "bambo.com"}'
 ```
 
-## API Endpoints
+## API
 
 ### Domains
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/domains` | List all domains |
-| POST | `/api/domains` | Add domain `{"domain": "x.com"}` |
-| DELETE | `/api/domains/:domain` | Remove domain |
+- `GET  /api/domains` - list domains
+- `POST /api/domains` - add `{"domain":"x.com"}`
+- `DELETE /api/domains/:domain` - remove
 
 ### Emails
+- `GET /api/mail/:address` - inbox (vd `/api/mail/1@bambo.com`)
+- `GET /api/mail/:address/detail/:id` - full email
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/mail/:address` | Get all emails for address |
-| GET | `/api/mail/:address/detail/:id` | Get full email |
-| GET | `/api/generate?domain=x.com` | Generate random address |
+### OTP (chi tra ve so!)
+- `GET /api/otp/:address` → `{"otp":"123456"}`
+- `GET /api/otp/:address/wait?since=...` - poll cho OTP moi
 
-### OTP (chi lay so!)
+### Utils
+- `GET /api/generate?domain=bambo.com` - random email
+- `DELETE /api/cleanup?hours=24` - xoa email cu
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/otp/:address` | Get latest OTP |
-| GET | `/api/otp/:address/wait?timeout=60` | Wait for new OTP (long polling) |
-
-### Webhook
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/incoming` | Receive email from CF Worker |
-
-### Cleanup
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| DELETE | `/api/cleanup?hours=24` | Delete old emails |
-
-## API Examples
+## Vi du
 
 ```bash
-# Check mail
-curl http://localhost:3000/api/mail/1@bambo.com
+# Lay OTP cua 1@bambo.com
+curl https://tempmail.xxx.workers.dev/api/otp/1@bambo.com
+# → {"otp":"483921","from":"noreply@service.com",...}
 
-# Get OTP only (chi tra ve so!)
-curl http://localhost:3000/api/otp/1@bambo.com
-# → {"otp": "123456", "from": "noreply@service.com", ...}
-
-# Wait for OTP (long polling, max 60s)
-curl http://localhost:3000/api/otp/1@bambo.com/wait?timeout=60
-# → {"otp": "789012"} khi co OTP moi
-
-# Generate random email
-curl http://localhost:3000/api/generate?domain=bambo.com
-# → {"email": "a1b2c3d4@bambo.com", ...}
+# Poll doi OTP moi
+curl https://tempmail.xxx.workers.dev/api/otp/1@bambo.com/wait?since=2024-01-01
 ```
 
-## Environment Variables
+## Bao mat
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3000` | Server port |
-| `API_KEY` | _(empty)_ | API key (empty = no auth) |
+Set API_KEY:
+```bash
+npx wrangler secret put API_KEY
+```
 
-## Security
+Sau do moi request can header `X-Api-Key: xxx` hoac query `?key=xxx`.
 
-Set `API_KEY` env var de bat xac thuc:
+## Dev local
 
 ```bash
-API_KEY=my-secret-key node src/server.js
+npm run dev
 ```
 
-Moi request API can header `X-Api-Key: my-secret-key` hoac query `?key=my-secret-key`.
+Chay local tai `http://localhost:8787`

@@ -3,655 +3,222 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TempMail - Email tạm thời</title>
+  <title>TempMail</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh}
+    .container{max-width:760px;margin:0 auto;padding:16px}
+    header{text-align:center;padding:24px 0 16px}
+    header h1{font-size:1.8rem;color:#00d4ff}
+    header p{color:#666;font-size:.85rem;margin-top:4px}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f0f23;
-      color: #e0e0e0;
-      min-height: 100vh;
-    }
+    .card{background:#12122a;border:1px solid#1e1e4a;border-radius:12px;padding:20px;margin-bottom:16px}
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+    .email-row{display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+    .email-row input{background:#0a0a1a;border:1px solid#2a2a5e;color:#fff;padding:10px 14px;border-radius:8px;font-size:1.05rem;width:140px;text-align:right}
+    .email-row .at{color:#444;font-size:1.2rem;padding:0 2px}
+    .email-row select{background:#0a0a1a;border:1px solid#2a2a5e;color:#00d4ff;padding:10px 14px;border-radius:8px;font-size:1.05rem;cursor:pointer}
 
-    header {
-      text-align: center;
-      padding: 30px 0 20px;
-    }
+    .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+    .btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:.15s}
+    .btn-p{background:#00d4ff;color:#0a0a1a}.btn-p:hover{background:#00b8e6}
+    .btn-s{background:#1e1e4a;color:#ccc}.btn-s:hover{background:#2a2a6a}
+    .btn-g{background:#28a745;color:#fff}.btn-g:hover{background:#218838}
+    .btn-d{background:#dc3545;color:#fff;font-size:.75rem;padding:4px 10px}.btn-d:hover{background:#c82333}
 
-    header h1 {
-      font-size: 2rem;
-      color: #00d4ff;
-      margin-bottom: 5px;
-    }
+    .status{text-align:center;color:#555;font-size:.8rem;margin-top:8px;min-height:18px}
+    .status.on{color:#28a745}
 
-    header p {
-      color: #888;
-      font-size: 0.9rem;
-    }
+    .otp-card{background:#0d2a0d;border:2px solid#28a745;border-radius:12px;padding:18px;text-align:center;display:none;margin-bottom:16px}
+    .otp-card.show{display:block}
+    .otp-label{color:#6c6;font-size:.8rem;margin-bottom:4px}
+    .otp-num{font-size:2.8rem;font-weight:bold;color:#28a745;letter-spacing:6px;font-family:'Courier New',monospace;cursor:pointer}
+    .otp-hint{color:#555;font-size:.75rem;margin-top:4px}
 
-    .email-box {
-      background: #1a1a3e;
-      border: 2px solid #2a2a5e;
-      border-radius: 12px;
-      padding: 24px;
-      margin: 20px 0;
-      text-align: center;
-    }
+    .inbox h2{font-size:1rem;color:#666;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .inbox .cnt{background:#1e1e4a;color:#00d4ff;padding:1px 8px;border-radius:12px;font-size:.8rem}
 
-    .email-input-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 16px;
-    }
+    .email-item{background:#12122a;border:1px solid#1e1e4a;border-radius:8px;padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:.15s}
+    .email-item:hover{border-color:#00d4ff;background:#161640}
+    .email-item .from{color:#00d4ff;font-weight:600;font-size:.85rem}
+    .email-item .subj{color:#ccc;margin-top:3px;font-size:.9rem}
+    .email-item .meta{color:#555;font-size:.75rem;margin-top:3px;display:flex;justify-content:space-between}
+    .otp-badge{background:#28a745;color:#fff;padding:1px 7px;border-radius:4px;font-size:.75rem;font-weight:bold}
 
-    .email-input-row input {
-      background: #0f0f23;
-      border: 1px solid #333;
-      color: #fff;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      width: 160px;
-      text-align: right;
-    }
+    .empty{text-align:center;padding:30px;color:#444}
+    .empty .ico{font-size:2rem;margin-bottom:8px}
 
-    .email-input-row select {
-      background: #0f0f23;
-      border: 1px solid #333;
-      color: #00d4ff;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
+    .loading{display:inline-block;width:14px;height:14px;border:2px solid#222;border-top-color:#00d4ff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
 
-    .email-display {
-      font-size: 1.4rem;
-      color: #00d4ff;
-      font-weight: bold;
-      word-break: break-all;
-      margin: 8px 0;
-    }
+    .dm-section{padding-top:16px;border-top:1px solid#1e1e4a;margin-top:8px}
+    .dm-section h3{color:#666;font-size:.9rem;margin-bottom:10px}
+    .dm-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+    .dm-tag{background:#1e1e4a;color:#00d4ff;padding:5px 10px;border-radius:16px;font-size:.8rem;display:flex;align-items:center;gap:5px}
+    .dm-tag .x{cursor:pointer;color:#f55;font-weight:bold}
+    .dm-add{display:flex;gap:6px}
+    .dm-add input{flex:1;background:#0a0a1a;border:1px solid#2a2a5e;color:#fff;padding:7px 10px;border-radius:8px;font-size:.85rem}
 
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
+    .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+    .modal-bg.show{display:flex}
+    .modal{background:#12122a;border:1px solid#1e1e4a;border-radius:12px;padding:20px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto}
+    .modal h3{color:#00d4ff;margin-bottom:2px;font-size:1rem}
+    .modal .mf{color:#666;font-size:.8rem;margin-bottom:12px}
+    .modal .mb{background:#0a0a1a;border-radius:8px;padding:14px;color:#bbb;line-height:1.5;word-break:break-word;font-size:.9rem}
 
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
+    .toast{position:fixed;bottom:16px;right:16px;padding:10px 18px;border-radius:8px;font-weight:600;font-size:.85rem;opacity:0;transition:.3s;z-index:200;color:#fff}
+    .toast.show{opacity:1}
 
-    .btn-primary {
-      background: #00d4ff;
-      color: #0f0f23;
-    }
-
-    .btn-primary:hover { background: #00b8e6; }
-
-    .btn-secondary {
-      background: #2a2a5e;
-      color: #e0e0e0;
-    }
-
-    .btn-secondary:hover { background: #3a3a7e; }
-
-    .btn-copy {
-      background: #28a745;
-      color: #fff;
-    }
-
-    .btn-copy:hover { background: #218838; }
-
-    .otp-box {
-      background: #1a3a1a;
-      border: 2px solid #28a745;
-      border-radius: 12px;
-      padding: 20px;
-      margin: 20px 0;
-      text-align: center;
-      display: none;
-    }
-
-    .otp-box.show { display: block; }
-
-    .otp-number {
-      font-size: 3rem;
-      font-weight: bold;
-      color: #28a745;
-      letter-spacing: 8px;
-      font-family: 'Courier New', monospace;
-    }
-
-    .otp-label {
-      color: #888;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
-    }
-
-    .inbox {
-      margin-top: 20px;
-    }
-
-    .inbox h2 {
-      font-size: 1.2rem;
-      color: #888;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .inbox h2 .count {
-      background: #2a2a5e;
-      color: #00d4ff;
-      padding: 2px 10px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-    }
-
-    .email-item {
-      background: #1a1a3e;
-      border: 1px solid #2a2a5e;
-      border-radius: 8px;
-      padding: 14px 18px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .email-item:hover {
-      border-color: #00d4ff;
-      background: #1f1f4a;
-    }
-
-    .email-item .from {
-      color: #00d4ff;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .email-item .subject {
-      color: #e0e0e0;
-      margin-top: 4px;
-    }
-
-    .email-item .meta {
-      color: #666;
-      font-size: 0.8rem;
-      margin-top: 4px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .email-item .otp-badge {
-      background: #28a745;
-      color: #fff;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: #555;
-    }
-
-    .empty-state .icon { font-size: 3rem; margin-bottom: 10px; }
-
-    .loading {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid #333;
-      border-top-color: #00d4ff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .status {
-      text-align: center;
-      color: #666;
-      font-size: 0.85rem;
-      margin-top: 8px;
-    }
-
-    .status.active { color: #28a745; }
-
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-
-    .modal-overlay.show { display: flex; }
-
-    .modal {
-      background: #1a1a3e;
-      border: 1px solid #2a2a5e;
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-
-    .modal h3 {
-      color: #00d4ff;
-      margin-bottom: 4px;
-    }
-
-    .modal .modal-from {
-      color: #888;
-      font-size: 0.85rem;
-      margin-bottom: 16px;
-    }
-
-    .modal .modal-body {
-      background: #0f0f23;
-      border-radius: 8px;
-      padding: 16px;
-      color: #ccc;
-      line-height: 1.6;
-      word-break: break-word;
-    }
-
-    .modal .btn-close {
-      margin-top: 16px;
-      width: 100%;
-    }
-
-    .domain-manage {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #2a2a5e;
-    }
-
-    .domain-manage h3 {
-      color: #888;
-      font-size: 1rem;
-      margin-bottom: 12px;
-    }
-
-    .domain-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .domain-tag {
-      background: #2a2a5e;
-      color: #00d4ff;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .domain-tag .remove {
-      cursor: pointer;
-      color: #ff4444;
-      font-weight: bold;
-    }
-
-    .add-domain-row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .add-domain-row input {
-      flex: 1;
-      background: #0f0f23;
-      border: 1px solid #333;
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 8px;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #28a745;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: 200;
-    }
-
-    .toast.show { opacity: 1; }
-
-    @media (max-width: 600px) {
-      .email-input-row { flex-direction: column; }
-      .email-input-row input, .email-input-row select { width: 100%; text-align: center; }
-      .otp-number { font-size: 2rem; letter-spacing: 4px; }
+    @media(max-width:500px){
+      .email-row{flex-direction:column}
+      .email-row input,.email-row select{width:100%;text-align:center}
+      .otp-num{font-size:2rem;letter-spacing:3px}
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>TempMail</h1>
-      <p>Email tam thoi - Multi Domain - Auto OTP</p>
-    </header>
+<div class="container">
+  <header>
+    <h1>TempMail</h1>
+    <p>Multi Domain - Auto OTP - Cloudflare</p>
+  </header>
 
-    <!-- Email Address Box -->
-    <div class="email-box">
-      <div class="email-input-row">
-        <input type="text" id="localPart" placeholder="ten-email" value="">
-        <span style="color:#666; font-size:1.3rem;">@</span>
-        <select id="domainSelect"></select>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="checkMail()">Kiem tra mail</button>
-        <button class="btn btn-secondary" onclick="generateRandom()">Random</button>
-        <button class="btn btn-copy" onclick="copyEmail()">Copy</button>
-      </div>
-      <div class="status" id="status"></div>
+  <div class="card">
+    <div class="email-row">
+      <input type="text" id="local" placeholder="username">
+      <span class="at">@</span>
+      <select id="domSel"></select>
     </div>
-
-    <!-- OTP Display -->
-    <div class="otp-box" id="otpBox">
-      <div class="otp-label">OTP Code</div>
-      <div class="otp-number" id="otpNumber" onclick="copyOTP()"></div>
-      <div style="color:#666; font-size:0.8rem; margin-top:8px;">Click de copy</div>
+    <div class="btns">
+      <button class="btn btn-p" onclick="checkMail()">Check Mail</button>
+      <button class="btn btn-s" onclick="genRandom()">Random</button>
+      <button class="btn btn-g" onclick="copyEmail()">Copy</button>
     </div>
+    <div class="status" id="st"></div>
+  </div>
 
-    <!-- Inbox -->
-    <div class="inbox">
-      <h2>Inbox <span class="count" id="emailCount">0</span></h2>
-      <div id="emailList">
-        <div class="empty-state">
-          <div class="icon">...</div>
-          <p>Nhap email va bam "Kiem tra mail"</p>
-        </div>
-      </div>
-    </div>
+  <div class="otp-card" id="otpCard">
+    <div class="otp-label">OTP CODE</div>
+    <div class="otp-num" id="otpNum" onclick="copyOTP()"></div>
+    <div class="otp-hint">click to copy</div>
+  </div>
 
-    <!-- Domain Management -->
-    <div class="domain-manage">
-      <h3>Quan ly Domain</h3>
-      <div class="domain-list" id="domainList"></div>
-      <div class="add-domain-row">
-        <input type="text" id="newDomain" placeholder="example.com">
-        <button class="btn btn-primary" onclick="addDomain()">Them</button>
-      </div>
+  <div class="inbox">
+    <h2>Inbox <span class="cnt" id="cnt">0</span></h2>
+    <div id="list">
+      <div class="empty"><div class="ico">...</div><p>Nhap email roi bam Check Mail</p></div>
     </div>
   </div>
 
-  <!-- Email Detail Modal -->
-  <div class="modal-overlay" id="modal" onclick="closeModal(event)">
-    <div class="modal">
-      <h3 id="modalSubject"></h3>
-      <div class="modal-from" id="modalFrom"></div>
-      <div class="modal-body" id="modalBody"></div>
-      <button class="btn btn-secondary btn-close" onclick="document.getElementById('modal').classList.remove('show')">Dong</button>
+  <div class="card">
+    <div class="dm-section">
+      <h3>Domains</h3>
+      <div class="dm-tags" id="dmTags"></div>
+      <div class="dm-add">
+        <input type="text" id="newDm" placeholder="example.com" onkeydown="if(event.key==='Enter')addDm()">
+        <button class="btn btn-p" onclick="addDm()">Add</button>
+      </div>
     </div>
   </div>
+</div>
 
-  <!-- Toast -->
-  <div class="toast" id="toast"></div>
+<div class="modal-bg" id="modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <h3 id="mSubj"></h3>
+    <div class="mf" id="mFrom"></div>
+    <div class="mb" id="mBody"></div>
+    <div style="margin-top:12px;text-align:right"><button class="btn btn-s" onclick="document.getElementById('modal').classList.remove('show')">Close</button></div>
+  </div>
+</div>
 
-  <script>
-    const API = '';
-    let autoRefresh = null;
+<div class="toast" id="toast"></div>
 
-    // ---- Init ----
-    loadDomains();
+<script>
+let timer=null;
 
-    function getEmail() {
-      const local = document.getElementById('localPart').value.trim();
-      const domain = document.getElementById('domainSelect').value;
-      return local && domain ? `${local}@${domain}` : '';
-    }
+init();
 
-    // ---- Domains ----
-    async function loadDomains() {
-      try {
-        const res = await fetch(`${API}/api/domains`);
-        const data = await res.json();
-        const select = document.getElementById('domainSelect');
-        const list = document.getElementById('domainList');
+function init(){loadDomains()}
+function getAddr(){const l=document.getElementById('local').value.trim(),d=document.getElementById('domSel').value;return l&&d?l+'@'+d:''}
 
-        select.innerHTML = '';
-        list.innerHTML = '';
+async function loadDomains(){
+  try{
+    const r=await fetch('/api/domains');const d=await r.json();
+    const sel=document.getElementById('domSel'),tags=document.getElementById('dmTags');
+    sel.innerHTML='';tags.innerHTML='';
+    d.domains.forEach(x=>{
+      sel.innerHTML+=`<option value="${x.domain}">@${x.domain}</option>`;
+      tags.innerHTML+=`<span class="dm-tag">${x.domain}<span class="x" onclick="rmDm('${x.domain}')">&times;</span></span>`;
+    });
+    if(!d.domains.length)tags.innerHTML='<span style="color:#555">No domains yet</span>';
+  }catch(e){console.error(e)}
+}
 
-        data.domains.forEach(d => {
-          // Select
-          const opt = document.createElement('option');
-          opt.value = d.domain;
-          opt.textContent = `@${d.domain}`;
-          select.appendChild(opt);
+async function addDm(){
+  const inp=document.getElementById('newDm'),v=inp.value.trim().toLowerCase();
+  if(!v)return;
+  const r=await fetch('/api/domains',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({domain:v})});
+  const d=await r.json();
+  if(d.ok){inp.value='';toast('Added '+v);loadDomains()}else toast(d.error||'Error',1)
+}
 
-          // Tag
-          const tag = document.createElement('span');
-          tag.className = 'domain-tag';
-          tag.innerHTML = `${d.domain} <span class="remove" onclick="removeDomain('${d.domain}')">&times;</span>`;
-          list.appendChild(tag);
-        });
+async function rmDm(dm){
+  if(!confirm('Remove '+dm+'?'))return;
+  await fetch('/api/domains/'+dm,{method:'DELETE'});
+  toast('Removed '+dm);loadDomains()
+}
 
-        if (data.domains.length === 0) {
-          list.innerHTML = '<span style="color:#666">Chua co domain nao. Them domain phia duoi.</span>';
-        }
-      } catch (e) {
-        console.error('Failed to load domains:', e);
-      }
-    }
+async function checkMail(){
+  const addr=getAddr();if(!addr)return toast('Enter email first',1);
+  setSt('Checking...',1);
+  try{
+    const[mRes,oRes]=await Promise.all([fetch('/api/mail/'+encodeURIComponent(addr)),fetch('/api/otp/'+encodeURIComponent(addr))]);
+    const mData=await mRes.json(),oData=await oRes.json();
+    document.getElementById('cnt').textContent=mData.count;
+    if(mData.count===0){
+      document.getElementById('list').innerHTML='<div class="empty"><div class="ico">...</div><p>No emails for '+esc(addr)+'</p></div>';
+    }else{renderList(mData.emails,addr)}
+    if(oData.otp){document.getElementById('otpCard').classList.add('show');document.getElementById('otpNum').textContent=oData.otp}
+    else{document.getElementById('otpCard').classList.remove('show')}
+    setSt('Updated '+new Date().toLocaleTimeString(),0);
+    startAuto();
+  }catch(e){setSt('Connection error',0);console.error(e)}
+}
 
-    async function addDomain() {
-      const input = document.getElementById('newDomain');
-      const domain = input.value.trim().toLowerCase();
-      if (!domain) return;
+function renderList(emails,addr){
+  document.getElementById('list').innerHTML=emails.map(e=>`
+    <div class="email-item" onclick="viewMail('${addr}',${e.id})">
+      <div class="from">${esc(e.mail_from)}</div>
+      <div class="subj">${esc(e.subject)}</div>
+      <div class="meta"><span>${ago(e.created_at)}</span>${e.otp?`<span class="otp-badge">OTP: ${e.otp}</span>`:''}</div>
+    </div>`).join('')
+}
 
-      try {
-        const res = await fetch(`${API}/api/domains`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ domain })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          input.value = '';
-          toast(`Da them ${domain}`);
-          loadDomains();
-        } else {
-          toast(data.error || 'Loi', true);
-        }
-      } catch (e) {
-        toast('Loi ket noi', true);
-      }
-    }
+async function viewMail(addr,id){
+  try{
+    const r=await fetch('/api/mail/'+encodeURIComponent(addr)+'/detail/'+id);const d=await r.json();
+    document.getElementById('mSubj').textContent=d.subject;
+    document.getElementById('mFrom').textContent='From: '+d.mail_from+' | '+d.created_at;
+    const body=document.getElementById('mBody');
+    if(d.body_html){body.innerHTML=d.body_html}else{body.textContent=d.body_text||'(empty)'}
+    document.getElementById('modal').classList.add('show');
+  }catch(e){toast('Error loading email',1)}
+}
 
-    async function removeDomain(domain) {
-      if (!confirm(`Xoa domain ${domain}?`)) return;
-      await fetch(`${API}/api/domains/${domain}`, { method: 'DELETE' });
-      toast(`Da xoa ${domain}`);
-      loadDomains();
-    }
+async function genRandom(){
+  const dm=document.getElementById('domSel').value;if(!dm)return toast('Add a domain first',1);
+  const r=await fetch('/api/generate?domain='+dm);const d=await r.json();
+  document.getElementById('local').value=d.local;toast('Generated '+d.email)
+}
 
-    // ---- Check Mail ----
-    async function checkMail() {
-      const email = getEmail();
-      if (!email) return toast('Nhap email truoc', true);
+function copyEmail(){const a=getAddr();if(!a)return;navigator.clipboard.writeText(a);toast('Copied!')}
+function copyOTP(){const o=document.getElementById('otpNum').textContent;if(!o)return;navigator.clipboard.writeText(o);toast('OTP copied: '+o)}
 
-      setStatus('Dang kiem tra...', true);
-
-      try {
-        const res = await fetch(`${API}/api/mail/${encodeURIComponent(email)}`);
-        const data = await res.json();
-
-        document.getElementById('emailCount').textContent = data.count;
-
-        if (data.count === 0) {
-          document.getElementById('emailList').innerHTML = `
-            <div class="empty-state">
-              <div class="icon">...</div>
-              <p>Chua co email nao cho ${email}</p>
-            </div>`;
-          document.getElementById('otpBox').classList.remove('show');
-        } else {
-          renderEmails(data.emails, email);
-        }
-
-        // Also check OTP
-        const otpRes = await fetch(`${API}/api/otp/${encodeURIComponent(email)}`);
-        const otpData = await otpRes.json();
-
-        if (otpData.otp) {
-          document.getElementById('otpBox').classList.add('show');
-          document.getElementById('otpNumber').textContent = otpData.otp;
-        } else {
-          document.getElementById('otpBox').classList.remove('show');
-        }
-
-        setStatus(`Cap nhat luc ${new Date().toLocaleTimeString()}`, false);
-
-        // Auto refresh every 5s
-        startAutoRefresh();
-      } catch (e) {
-        setStatus('Loi ket noi', false);
-        console.error(e);
-      }
-    }
-
-    function renderEmails(emails, address) {
-      const list = document.getElementById('emailList');
-      list.innerHTML = emails.map(e => `
-        <div class="email-item" onclick="viewEmail('${address}', ${e.id})">
-          <div class="from">${escapeHtml(e.mail_from)}</div>
-          <div class="subject">${escapeHtml(e.subject)}</div>
-          <div class="meta">
-            <span>${timeAgo(e.created_at)}</span>
-            ${e.otp ? `<span class="otp-badge">OTP: ${e.otp}</span>` : ''}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function viewEmail(address, id) {
-      try {
-        const res = await fetch(`${API}/api/mail/${encodeURIComponent(address)}/detail/${id}`);
-        const data = await res.json();
-
-        document.getElementById('modalSubject').textContent = data.subject;
-        document.getElementById('modalFrom').textContent = `Tu: ${data.mail_from} | ${data.created_at}`;
-
-        if (data.body_html) {
-          document.getElementById('modalBody').innerHTML = data.body_html;
-        } else {
-          document.getElementById('modalBody').textContent = data.body_text || '(empty)';
-        }
-
-        document.getElementById('modal').classList.add('show');
-      } catch (e) {
-        toast('Loi khi tai email', true);
-      }
-    }
-
-    function closeModal(e) {
-      if (e.target === e.currentTarget) {
-        document.getElementById('modal').classList.remove('show');
-      }
-    }
-
-    // ---- Generate Random ----
-    async function generateRandom() {
-      const domain = document.getElementById('domainSelect').value;
-      if (!domain) return toast('Them domain truoc', true);
-
-      try {
-        const res = await fetch(`${API}/api/generate?domain=${domain}`);
-        const data = await res.json();
-        document.getElementById('localPart').value = data.local;
-        toast(`Da tao ${data.email}`);
-      } catch (e) {
-        toast('Loi', true);
-      }
-    }
-
-    // ---- Copy ----
-    function copyEmail() {
-      const email = getEmail();
-      if (!email) return;
-      navigator.clipboard.writeText(email);
-      toast('Da copy email!');
-    }
-
-    function copyOTP() {
-      const otp = document.getElementById('otpNumber').textContent;
-      if (!otp) return;
-      navigator.clipboard.writeText(otp);
-      toast(`Da copy OTP: ${otp}`);
-    }
-
-    // ---- Auto Refresh ----
-    function startAutoRefresh() {
-      if (autoRefresh) clearInterval(autoRefresh);
-      autoRefresh = setInterval(checkMail, 5000);
-    }
-
-    // ---- Helpers ----
-    function setStatus(text, loading) {
-      const el = document.getElementById('status');
-      el.innerHTML = loading ? `<span class="loading"></span> ${text}` : text;
-      el.className = loading ? 'status' : 'status active';
-    }
-
-    function toast(msg, isError) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.style.background = isError ? '#dc3545' : '#28a745';
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 2500);
-    }
-
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str || '';
-      return div.innerHTML;
-    }
-
-    function timeAgo(dateStr) {
-      const now = new Date();
-      const date = new Date(dateStr + 'Z');
-      const diff = Math.floor((now - date) / 1000);
-      if (diff < 60) return `${diff}s truoc`;
-      if (diff < 3600) return `${Math.floor(diff / 60)}m truoc`;
-      if (diff < 86400) return `${Math.floor(diff / 3600)}h truoc`;
-      return `${Math.floor(diff / 86400)}d truoc`;
-    }
-  </script>
+function startAuto(){if(timer)clearInterval(timer);timer=setInterval(checkMail,5000)}
+function setSt(t,loading){const e=document.getElementById('st');e.innerHTML=loading?'<span class="loading"></span> '+t:t;e.className=loading?'status':'status on'}
+function toast(m,err){const e=document.getElementById('toast');e.textContent=m;e.style.background=err?'#dc3545':'#28a745';e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200)}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function ago(ds){const s=Math.floor((Date.now()-new Date(ds+'Z'))/1000);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'}
+</script>
 </body>
 </html>

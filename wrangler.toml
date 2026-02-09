@@ -1,0 +1,20 @@
+name = "tempmail"
+main = "src/worker.js"
+compatibility_date = "2024-12-01"
+
+# Static assets (frontend UI)
+[assets]
+directory = "./public"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "tempmail-db"
+database_id = "YOUR_D1_DATABASE_ID"  # Replace after running: wrangler d1 create tempmail-db
+
+# Environment variables
+[vars]
+API_KEY = ""  # Set via: wrangler secret put API_KEY
+
+# Email routing - add your domains here
+# After deploy, go to CF Dashboard → Email → Email Routing → Route to Worker

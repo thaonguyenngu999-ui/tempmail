@@ -1,15 +1,19 @@
 {
   "name": "tempmail",
   "version": "1.0.0",
-  "description": "Temporary email service with multi-domain support via Cloudflare",
-  "main": "src/server.js",
+  "private": true,
+  "description": "Temporary email service - Full Cloudflare (Worker + D1 + Pages)",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create tempmail-db",
+    "db:migrate": "wrangler d1 execute tempmail-db --file=schema.sql",
+    "db:migrate:local": "wrangler d1 execute tempmail-db --file=schema.sql --local"
   },
   "dependencies": {
-    "better-sqlite3": "^11.7.0",
-    "express": "^4.21.0",
-    "uuid": "^10.0.0"
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.99.0"
   }
 }
