@@ -103,7 +103,6 @@ app.get('/api/otp/:address', async (c) => {
   return c.json({ otp: email.otp, from: email.mail_from, subject: email.subject, time: email.created_at });
 });
 
-// OTP wait (long polling via repeated fetches on client side - Workers have 30s limit)
 app.get('/api/otp/:address/wait', async (c) => {
   const address = c.req.param('address').toLowerCase();
   const since = c.req.query('since') || '1970-01-01';
@@ -148,33 +147,160 @@ app.delete('/api/cleanup', async (c) => {
   return c.json({ deleted: result.meta.changes });
 });
 
+// ============ EMAIL DECODING HELPERS ============
+
+function decodeQuotedPrintable(str) {
+  // Remove soft line breaks (=\r\n or =\n)
+  str = str.replace(/=\r?\n/g, '');
+  // Decode =XX hex sequences
+  return str.replace(/=([0-9A-Fa-f]{2})/g, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
+}
+
+function decodeBase64(str) {
+  try {
+    // Remove line breaks, then decode
+    const clean = str.replace(/\r?\n/g, '');
+    const bytes = Uint8Array.from(atob(clean), c => c.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch {
+    return str;
+  }
+}
+
+function decodeContent(content, encoding) {
+  if (!content || !encoding) return content || '';
+  encoding = encoding.toLowerCase().trim();
+  if (encoding === 'quoted-printable') return decodeQuotedPrintable(content);
+  if (encoding === 'base64') return decodeBase64(content);
+  return content;
+}
+
+function decodeHeader(raw) {
+  if (!raw) return '';
+  // Decode RFC 2047 encoded headers: =?charset?encoding?text?=
+  return raw.replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (_, charset, enc, text) => {
+    if (enc.toUpperCase() === 'B') {
+      try {
+        const bytes = Uint8Array.from(atob(text), c => c.charCodeAt(0));
+        return new TextDecoder(charset).decode(bytes);
+      } catch { return text; }
+    }
+    if (enc.toUpperCase() === 'Q') {
+      const decoded = text.replace(/_/g, ' ').replace(/=([0-9A-Fa-f]{2})/g,
+        (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+      try {
+        const bytes = Uint8Array.from(decoded, c => c.charCodeAt(0));
+        return new TextDecoder(charset).decode(bytes);
+      } catch { return decoded; }
+    }
+    return text;
+  });
+}
+
+function parseMimePart(part) {
+  const headerEnd = part.indexOf('\r\n\r\n');
+  if (headerEnd === -1) {
+    const headerEnd2 = part.indexOf('\n\n');
+    if (headerEnd2 === -1) return { headers: '', body: part };
+    return { headers: part.substring(0, headerEnd2), body: part.substring(headerEnd2 + 2) };
+  }
+  return { headers: part.substring(0, headerEnd), body: part.substring(headerEnd + 4) };
+}
+
+function getHeader(headers, name) {
+  const regex = new RegExp(`^${name}:\\s*(.+?)$`, 'im');
+  const match = headers.match(regex);
+  // Handle folded headers (continuation lines starting with whitespace)
+  if (match) {
+    let val = match[1];
+    const lines = headers.split(/\r?\n/);
+    let found = false;
+    for (const line of lines) {
+      if (found && /^\s/.test(line)) {
+        val += ' ' + line.trim();
+      } else if (line.toLowerCase().startsWith(name.toLowerCase() + ':')) {
+        found = true;
+      } else if (found) {
+        break;
+      }
+    }
+    return val.trim();
+  }
+  return '';
+}
+
 // ============ EMAIL HANDLER (Cloudflare Email Routing) ============
 
 async function handleEmail(message, env) {
   const to = message.to;
   const from = message.from;
-  const subject = message.headers.get('subject') || '(no subject)';
+  const rawSubject = message.headers.get('subject') || '(no subject)';
+  const subject = decodeHeader(rawSubject);
   const messageId = message.headers.get('message-id') || '';
 
   // Read raw email
   const rawEmail = await new Response(message.raw).text();
 
-  // Parse text/html parts
   let text = '';
   let html = '';
 
-  const parts = rawEmail.split(/--[\w\-]+/);
-  for (const part of parts) {
-    if (part.includes('Content-Type: text/plain')) {
-      text = part.split('\r\n\r\n').slice(1).join('\r\n\r\n').trim();
+  // Find boundary from Content-Type header
+  const ctHeader = getHeader(rawEmail.split(/\r?\n\r?\n/)[0] || '', 'Content-Type');
+  const boundaryMatch = ctHeader.match(/boundary="?([^"\s;]+)"?/i);
+
+  if (boundaryMatch) {
+    // Multipart email
+    const boundary = boundaryMatch[1];
+    const parts = rawEmail.split('--' + boundary);
+
+    for (const part of parts) {
+      const { headers, body } = parseMimePart(part);
+      const ct = getHeader(headers, 'Content-Type').toLowerCase();
+      const cte = getHeader(headers, 'Content-Transfer-Encoding');
+
+      if (ct.includes('text/plain') && !text) {
+        text = decodeContent(body.trim(), cte);
+      }
+      if (ct.includes('text/html') && !html) {
+        html = decodeContent(body.trim(), cte);
+      }
+
+      // Handle nested multipart (e.g. multipart/alternative inside multipart/mixed)
+      const nestedBoundary = ct.match(/boundary="?([^"\s;]+)"?/i);
+      if (nestedBoundary) {
+        const nestedParts = body.split('--' + nestedBoundary[1]);
+        for (const np of nestedParts) {
+          const nested = parseMimePart(np);
+          const nct = getHeader(nested.headers, 'Content-Type').toLowerCase();
+          const ncte = getHeader(nested.headers, 'Content-Transfer-Encoding');
+          if (nct.includes('text/plain') && !text) {
+            text = decodeContent(nested.body.trim(), ncte);
+          }
+          if (nct.includes('text/html') && !html) {
+            html = decodeContent(nested.body.trim(), ncte);
+          }
+        }
+      }
     }
-    if (part.includes('Content-Type: text/html')) {
-      html = part.split('\r\n\r\n').slice(1).join('\r\n\r\n').trim();
+  } else {
+    // Single part email
+    const { headers, body } = parseMimePart(rawEmail);
+    const cte = getHeader(headers, 'Content-Transfer-Encoding');
+    const ct = getHeader(headers, 'Content-Type').toLowerCase();
+
+    const decoded = decodeContent(body.trim(), cte);
+    if (ct.includes('text/html')) {
+      html = decoded;
+    } else {
+      text = decoded;
     }
   }
 
+  // Fallback
   if (!text && !html) {
-    text = rawEmail.split('\r\n\r\n').slice(1).join('\r\n\r\n').trim();
+    text = rawEmail.split(/\r?\n\r?\n/).slice(1).join('\n\n').trim();
   }
 
   const [localPart, domain] = to.toLowerCase().split('@');
