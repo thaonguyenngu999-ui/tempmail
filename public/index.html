@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TempMail - Email tạm thời</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f23;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      padding: 30px 0 20px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #00d4ff;
+      margin-bottom: 5px;
+    }
+
+    header p {
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    .email-box {
+      background: #1a1a3e;
+      border: 2px solid #2a2a5e;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .email-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .email-input-row input {
+      background: #0f0f23;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      width: 160px;
+      text-align: right;
+    }
+
+    .email-input-row select {
+      background: #0f0f23;
+      border: 1px solid #333;
+      color: #00d4ff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .email-display {
+      font-size: 1.4rem;
+      color: #00d4ff;
+      font-weight: bold;
+      word-break: break-all;
+      margin: 8px 0;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #00d4ff;
+      color: #0f0f23;
+    }
+
+    .btn-primary:hover { background: #00b8e6; }
+
+    .btn-secondary {
+      background: #2a2a5e;
+      color: #e0e0e0;
+    }
+
+    .btn-secondary:hover { background: #3a3a7e; }
+
+    .btn-copy {
+      background: #28a745;
+      color: #fff;
+    }
+
+    .btn-copy:hover { background: #218838; }
+
+    .otp-box {
+      background: #1a3a1a;
+      border: 2px solid #28a745;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+      display: none;
+    }
+
+    .otp-box.show { display: block; }
+
+    .otp-number {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #28a745;
+      letter-spacing: 8px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .otp-label {
+      color: #888;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+
+    .inbox {
+      margin-top: 20px;
+    }
+
+    .inbox h2 {
+      font-size: 1.2rem;
+      color: #888;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .inbox h2 .count {
+      background: #2a2a5e;
+      color: #00d4ff;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+
+    .email-item {
+      background: #1a1a3e;
+      border: 1px solid #2a2a5e;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .email-item:hover {
+      border-color: #00d4ff;
+      background: #1f1f4a;
+    }
+
+    .email-item .from {
+      color: #00d4ff;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .email-item .subject {
+      color: #e0e0e0;
+      margin-top: 4px;
+    }
+
+    .email-item .meta {
+      color: #666;
+      font-size: 0.8rem;
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .email-item .otp-badge {
+      background: #28a745;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #555;
+    }
+
+    .empty-state .icon { font-size: 3rem; margin-bottom: 10px; }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #333;
+      border-top-color: #00d4ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status {
+      text-align: center;
+      color: #666;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    .status.active { color: #28a745; }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: #1a1a3e;
+      border: 1px solid #2a2a5e;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal h3 {
+      color: #00d4ff;
+      margin-bottom: 4px;
+    }
+
+    .modal .modal-from {
+      color: #888;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+    }
+
+    .modal .modal-body {
+      background: #0f0f23;
+      border-radius: 8px;
+      padding: 16px;
+      color: #ccc;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .modal .btn-close {
+      margin-top: 16px;
+      width: 100%;
+    }
+
+    .domain-manage {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #2a2a5e;
+    }
+
+    .domain-manage h3 {
+      color: #888;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .domain-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .domain-tag {
+      background: #2a2a5e;
+      color: #00d4ff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .domain-tag .remove {
+      cursor: pointer;
+      color: #ff4444;
+      font-weight: bold;
+    }
+
+    .add-domain-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .add-domain-row input {
+      flex: 1;
+      background: #0f0f23;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #28a745;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 200;
+    }
+
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 600px) {
+      .email-input-row { flex-direction: column; }
+      .email-input-row input, .email-input-row select { width: 100%; text-align: center; }
+      .otp-number { font-size: 2rem; letter-spacing: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>TempMail</h1>
+      <p>Email tam thoi - Multi Domain - Auto OTP</p>
+    </header>
+
+    <!-- Email Address Box -->
+    <div class="email-box">
+      <div class="email-input-row">
+        <input type="text" id="localPart" placeholder="ten-email" value="">
+        <span style="color:#666; font-size:1.3rem;">@</span>
+        <select id="domainSelect"></select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkMail()">Kiem tra mail</button>
+        <button class="btn btn-secondary" onclick="generateRandom()">Random</button>
+        <button class="btn btn-copy" onclick="copyEmail()">Copy</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <!-- OTP Display -->
+    <div class="otp-box" id="otpBox">
+      <div class="otp-label">OTP Code</div>
+      <div class="otp-number" id="otpNumber" onclick="copyOTP()"></div>
+      <div style="color:#666; font-size:0.8rem; margin-top:8px;">Click de copy</div>
+    </div>
+
+    <!-- Inbox -->
+    <div class="inbox">
+      <h2>Inbox <span class="count" id="emailCount">0</span></h2>
+      <div id="emailList">
+        <div class="empty-state">
+          <div class="icon">...</div>
+          <p>Nhap email va bam "Kiem tra mail"</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Domain Management -->
+    <div class="domain-manage">
+      <h3>Quan ly Domain</h3>
+      <div class="domain-list" id="domainList"></div>
+      <div class="add-domain-row">
+        <input type="text" id="newDomain" placeholder="example.com">
+        <button class="btn btn-primary" onclick="addDomain()">Them</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Detail Modal -->
+  <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+    <div class="modal">
+      <h3 id="modalSubject"></h3>
+      <div class="modal-from" id="modalFrom"></div>
+      <div class="modal-body" id="modalBody"></div>
+      <button class="btn btn-secondary btn-close" onclick="document.getElementById('modal').classList.remove('show')">Dong</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '';
+    let autoRefresh = null;
+
+    // ---- Init ----
+    loadDomains();
+
+    function getEmail() {
+      const local = document.getElementById('localPart').value.trim();
+      const domain = document.getElementById('domainSelect').value;
+      return local && domain ? `${local}@${domain}` : '';
+    }
+
+    // ---- Domains ----
+    async function loadDomains() {
+      try {
+        const res = await fetch(`${API}/api/domains`);
+        const data = await res.json();
+        const select = document.getElementById('domainSelect');
+        const list = document.getElementById('domainList');
+
+        select.innerHTML = '';
+        list.innerHTML = '';
+
+        data.domains.forEach(d => {
+          // Select
+          const opt = document.createElement('option');
+          opt.value = d.domain;
+          opt.textContent = `@${d.domain}`;
+          select.appendChild(opt);
+
+          // Tag
+          const tag = document.createElement('span');
+          tag.className = 'domain-tag';
+          tag.innerHTML = `${d.domain} <span class="remove" onclick="removeDomain('${d.domain}')">&times;</span>`;
+          list.appendChild(tag);
+        });
+
+        if (data.domains.length === 0) {
+          list.innerHTML = '<span style="color:#666">Chua co domain nao. Them domain phia duoi.</span>';
+        }
+      } catch (e) {
+        console.error('Failed to load domains:', e);
+      }
+    }
+
+    async function addDomain() {
+      const input = document.getElementById('newDomain');
+      const domain = input.value.trim().toLowerCase();
+      if (!domain) return;
+
+      try {
+        const res = await fetch(`${API}/api/domains`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domain })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          input.value = '';
+          toast(`Da them ${domain}`);
+          loadDomains();
+        } else {
+          toast(data.error || 'Loi', true);
+        }
+      } catch (e) {
+        toast('Loi ket noi', true);
+      }
+    }
+
+    async function removeDomain(domain) {
+      if (!confirm(`Xoa domain ${domain}?`)) return;
+      await fetch(`${API}/api/domains/${domain}`, { method: 'DELETE' });
+      toast(`Da xoa ${domain}`);
+      loadDomains();
+    }
+
+    // ---- Check Mail ----
+    async function checkMail() {
+      const email = getEmail();
+      if (!email) return toast('Nhap email truoc', true);
+
+      setStatus('Dang kiem tra...', true);
+
+      try {
+        const res = await fetch(`${API}/api/mail/${encodeURIComponent(email)}`);
+        const data = await res.json();
+
+        document.getElementById('emailCount').textContent = data.count;
+
+        if (data.count === 0) {
+          document.getElementById('emailList').innerHTML = `
+            <div class="empty-state">
+              <div class="icon">...</div>
+              <p>Chua co email nao cho ${email}</p>
+            </div>`;
+          document.getElementById('otpBox').classList.remove('show');
+        } else {
+          renderEmails(data.emails, email);
+        }
+
+        // Also check OTP
+        const otpRes = await fetch(`${API}/api/otp/${encodeURIComponent(email)}`);
+        const otpData = await otpRes.json();
+
+        if (otpData.otp) {
+          document.getElementById('otpBox').classList.add('show');
+          document.getElementById('otpNumber').textContent = otpData.otp;
+        } else {
+          document.getElementById('otpBox').classList.remove('show');
+        }
+
+        setStatus(`Cap nhat luc ${new Date().toLocaleTimeString()}`, false);
+
+        // Auto refresh every 5s
+        startAutoRefresh();
+      } catch (e) {
+        setStatus('Loi ket noi', false);
+        console.error(e);
+      }
+    }
+
+    function renderEmails(emails, address) {
+      const list = document.getElementById('emailList');
+      list.innerHTML = emails.map(e => `
+        <div class="email-item" onclick="viewEmail('${address}', ${e.id})">
+          <div class="from">${escapeHtml(e.mail_from)}</div>
+          <div class="subject">${escapeHtml(e.subject)}</div>
+          <div class="meta">
+            <span>${timeAgo(e.created_at)}</span>
+            ${e.otp ? `<span class="otp-badge">OTP: ${e.otp}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function viewEmail(address, id) {
+      try {
+        const res = await fetch(`${API}/api/mail/${encodeURIComponent(address)}/detail/${id}`);
+        const data = await res.json();
+
+        document.getElementById('modalSubject').textContent = data.subject;
+        document.getElementById('modalFrom').textContent = `Tu: ${data.mail_from} | ${data.created_at}`;
+
+        if (data.body_html) {
+          document.getElementById('modalBody').innerHTML = data.body_html;
+        } else {
+          document.getElementById('modalBody').textContent = data.body_text || '(empty)';
+        }
+
+        document.getElementById('modal').classList.add('show');
+      } catch (e) {
+        toast('Loi khi tai email', true);
+      }
+    }
+
+    function closeModal(e) {
+      if (e.target === e.currentTarget) {
+        document.getElementById('modal').classList.remove('show');
+      }
+    }
+
+    // ---- Generate Random ----
+    async function generateRandom() {
+      const domain = document.getElementById('domainSelect').value;
+      if (!domain) return toast('Them domain truoc', true);
+
+      try {
+        const res = await fetch(`${API}/api/generate?domain=${domain}`);
+        const data = await res.json();
+        document.getElementById('localPart').value = data.local;
+        toast(`Da tao ${data.email}`);
+      } catch (e) {
+        toast('Loi', true);
+      }
+    }
+
+    // ---- Copy ----
+    function copyEmail() {
+      const email = getEmail();
+      if (!email) return;
+      navigator.clipboard.writeText(email);
+      toast('Da copy email!');
+    }
+
+    function copyOTP() {
+      const otp = document.getElementById('otpNumber').textContent;
+      if (!otp) return;
+      navigator.clipboard.writeText(otp);
+      toast(`Da copy OTP: ${otp}`);
+    }
+
+    // ---- Auto Refresh ----
+    function startAutoRefresh() {
+      if (autoRefresh) clearInterval(autoRefresh);
+      autoRefresh = setInterval(checkMail, 5000);
+    }
+
+    // ---- Helpers ----
+    function setStatus(text, loading) {
+      const el = document.getElementById('status');
+      el.innerHTML = loading ? `<span class="loading"></span> ${text}` : text;
+      el.className = loading ? 'status' : 'status active';
+    }
+
+    function toast(msg, isError) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.style.background = isError ? '#dc3545' : '#28a745';
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function timeAgo(dateStr) {
+      const now = new Date();
+      const date = new Date(dateStr + 'Z');
+      const diff = Math.floor((now - date) / 1000);
+      if (diff < 60) return `${diff}s truoc`;
+      if (diff < 3600) return `${Math.floor(diff / 60)}m truoc`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h truoc`;
+      return `${Math.floor(diff / 86400)}d truoc`;
+    }
+  </script>
+</body>
+</html>
