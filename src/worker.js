@@ -121,6 +121,25 @@ app.get('/api/otp/:address/wait', async (c) => {
 
 // ============ GENERATE ============
 
+const HO = ['nguyen','tran','le','pham','huynh','hoang','phan','vu','vo','dang','bui','do','ho','ngo','duong','ly','truong','dinh','lam','mai','luong','dao','doan','tang','cao'];
+const TEN = ['an','anh','bao','binh','chi','cuong','dai','dat','duc','dung','duy','giang','ha','hai','hang','hanh','hao','hien','hieu','hoa','hoai','hung','huong','kha','khanh','khoa','khoi','lam','lan','linh','loan','long','mai','minh','my','nam','ngoc','nha','nhan','nhi','nhu','phong','phuc','phuong','quang','quan','quy','son','tam','thai','thanh','thao','thien','thinh','thu','thuy','tien','tin','toan','trang','tri','trieu','trong','truc','trung','tuan','tuyet','van','vi','viet','vinh','vy','xuan','yen'];
+
+function randomVnName() {
+  const ho = HO[Math.floor(Math.random() * HO.length)];
+  const ten = TEN[Math.floor(Math.random() * TEN.length)];
+  const ten2 = TEN[Math.floor(Math.random() * TEN.length)];
+  const num = Math.floor(Math.random() * 100);
+  const patterns = [
+    `${ho}${ten}${num}`,
+    `${ten}.${ho}${num}`,
+    `${ho}.${ten}${ten2}`,
+    `${ten}${ho}${num}`,
+    `${ho}${ten}${ten2}${num}`,
+    `${ten}${num}${ho}`,
+  ];
+  return patterns[Math.floor(Math.random() * patterns.length)];
+}
+
 app.get('/api/generate', async (c) => {
   let domain = c.req.query('domain');
 
@@ -132,7 +151,7 @@ app.get('/api/generate', async (c) => {
     domain = d.domain;
   }
 
-  const local = crypto.randomUUID().split('-')[0];
+  const local = randomVnName();
   return c.json({ email: `${local}@${domain}`, domain, local });
 });
 
